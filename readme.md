@@ -1,7 +1,7 @@
 # PrepAI Platform
 
 ## Description
-
+abondance et concretisation
 PrepAI est une plateforme d'apprentissage qui combine expertise humaine et intelligence artificielle pour préparer les étudiants aux examens, certifications et entretiens techniques.
 
 ## Structure du projet
@@ -55,9 +55,6 @@ DATABASE_URL="postgresql://user:password@localhost:5432/prepai"
 API_PORT=3001
 API_URL="http://localhost:3001"
 
-# Auth (Clerk)
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
 
 # API Keys
 ANTHROPIC_API_KEY=
@@ -151,7 +148,6 @@ pnpm format          # Formater le code
     "@nestjs/swagger": "^7.1.8",
     "@prisma/client": "^5.2.0",
     "class-validator": "^0.14.0",
-    "@clerk/clerk-sdk-node": "^4.12.5",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1"
   },
@@ -194,7 +190,6 @@ pnpm format          # Formater le code
     "lint": "next lint"
   },
   "dependencies": {
-    "@clerk/nextjs": "^4.23.3",
     "next": "13.4.19",
     "react": "18.2.0",
     "react-dom": "18.2.0",

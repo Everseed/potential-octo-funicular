@@ -1,0 +1,352 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  name          String?
+  role          UserRole       @default(STUDENT)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  emailVerified DateTime?
+  exams         Exam[]
+  interviews    Interview[]
+  subInterviews SubInterview[]
+  progress      Progress?
+  ExamProgress  ExamProgress[]
+  payments      Payment[]      
+  sessions      Session[]      
+  timeSlots     TimeSlot[]
+  studentBookings Booking[]    @relation("StudentBookings")
+  mentorBookings  Booking[]    @relation("MentorBookings")
+  notifications   Notification[]
+}
+
+model Payment {
+  id          String        @id @default(uuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  amount      Float
+  currency    String
+  method      PaymentMethod
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([userId])
+}
+
+model Session {
+  id          String        @id @default(uuid())
+  title       String
+  description String?
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  type        SessionType
+  content     Json          // Contenu structuré du cours
+  resources   Json?         // Ressources additionnelles
+  duration    Int           // En minutes
+  startTime   DateTime?
+  endTime     DateTime?
+  status      SessionStatus @default(SCHEDULED)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([userId])
+}
+
+model Exam {
+  id           String         @id @default(uuid())
+  type         ExamType
+  title        String
+  status       ExamStatus     @default(PENDING)
+  questions    Json
+  duration     Int?
+  startTime    DateTime?
+  endTime      DateTime?
+  score        Float?
+  difficulty   ExamDifficulty @default(MEDIUM) // Nouveau champ
+  userId       String
+  user         User           @relation(fields: [userId], references: [id])
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  ExamProgress ExamProgress[]
+  category     String?        // Pour le classement des examens
+  tags         String[]       // Pour faciliter la recherche
+  
+  @@index([userId])
+  @@index([type, difficulty]) // Index pour la recherche
+}
+
+model ExamProgress {
+  id              String   @id @default(uuid())
+  examId          String
+  userId          String
+  currentQuestion Int      @default(0)
+  answers         Json     @default("{}")
+  timeSpent       Int      @default(0)
+  updatedAt       DateTime @updatedAt
+  exam            Exam     @relation(fields: [examId], references: [id])
+  user            User     @relation(fields: [userId], references: [id])
+
+  @@unique([examId, userId])
+}
+
+model Interview {
+  id            String          @id @default(uuid())
+  type          InterviewType
+  title         String
+  status        InterviewStatus @default(SCHEDULED)
+  scheduledFor  DateTime
+  duration      Int // in minutes
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  subInterviews SubInterview[]
+  videoSessions VideoSession[]
+  participants  Json
+  feedback      Json?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([userId])
+}
+
+model SubInterview {
+  id            String         @id @default(uuid())
+  interviewId   String
+  interview     Interview      @relation(fields: [interviewId], references: [id])
+  title         String
+  description   String?
+  participants  Json
+  startTime     DateTime
+  endTime       DateTime
+  userId        String
+  user          User           @relation(fields: [userId], references: [id])
+  videoSessions VideoSession[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([interviewId])
+  @@index([userId])
+}
+
+model VideoSession {
+  id             String        @id @default(uuid())
+  interviewId    String?
+  interview      Interview?    @relation(fields: [interviewId], references: [id])
+  subInterviewId String?
+  subInterview   SubInterview? @relation(fields: [subInterviewId], references: [id])
+  url            String
+  duration       Int // in seconds 
+  startedAt      DateTime
+  endedAt        DateTime
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([interviewId])
+  @@index([subInterviewId])
+}
+
+model Progress {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  totalExams     Int      @default(0)
+  completedExams Int      @default(0)
+  averageScore   Float    @default(0)
+  strengths      String[]
+  weaknesses     String[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model MessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  deleted   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Annotation {
+  id             String   @id @default(uuid())
+  presentationId String
+  userId         String
+  slideNumber    Int
+  type           String // DRAW, TEXT, SHAPE
+  color          String
+  thickness      Int?
+  data           Json // points, text, shape data
+  deleted        Boolean  @default(false)
+  createdAt      DateTime @default(now())
+}
+
+model DrawingElement {
+  id             String   @id @default(uuid())
+  presentationId String
+  userId         String
+  type           String
+  data           Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deleted        Boolean  @default(false)
+}
+
+model ReactionAnalytics {
+  id        String   @id @default(uuid())
+  sessionId String
+  period    String
+  data      Json
+  createdAt DateTime @default(now())
+}
+
+model Vector {
+  id         String   @id @default(uuid())
+  embedding  Float[] // Stockage du vecteur d'embedding
+  metadata   Json // Métadonnées associées au vecteur
+  type       String // Type de contenu (ex: 'EXAM_QUESTION', 'CODING_PROBLEM', etc.)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deleted    Boolean  @default(false)
+
+  @@index([type])
+  // Index pour la recherche de similarité
+  @@index([embedding])//type: Vector
+}
+
+// Nouvelles tables pour la gestion des créneaux horaires
+model TimeSlot {
+  id          String    @id @default(uuid())
+  startTime   DateTime
+  endTime     DateTime
+  userId      String    // ID du mentor
+  user        User      @relation(fields: [userId], references: [id])
+  isAvailable Boolean   @default(true)
+  booking     Booking?  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([startTime, endTime])
+}
+
+model Booking {
+  id          String    @id @default(uuid())
+  timeSlotId  String    @unique
+  timeSlot    TimeSlot  @relation(fields: [timeSlotId], references: [id])
+  studentId   String    // ID de l'étudiant
+  student     User      @relation("StudentBookings", fields: [studentId], references: [id])
+  mentorId    String    // ID du mentor
+  mentor      User      @relation("MentorBookings", fields: [mentorId], references: [id])
+  status      BookingStatus @default(PENDING)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([studentId])
+  @@index([mentorId])
+}
+
+model Notification {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  type        NotificationType
+  title       String
+  message     String
+  isRead      Boolean   @default(false)
+  data        Json?     // Données supplémentaires (ex: bookingId)
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum NotificationType {
+  BOOKING_REQUEST
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  REMINDER
+  SYSTEM
+}
+
+enum UserRole {
+  STUDENT
+  MENTOR
+  ADMIN
+}
+
+enum ExamType {
+  MCQ
+  CODING
+  OPEN
+}
+
+enum ExamStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum InterviewType {
+  MOCK
+  TECHNICAL
+  BEHAVIORAL
+  PAIR_PROGRAMMING
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+enum PaymentMethod {
+  STRIPE
+  PAYPAL
+  ORANGE_MONEY
+  MTN_MONEY
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum SessionType {
+  COURSE
+  WORKSHOP
+  TUTORING
+  GROUP_STUDY
+}
+
+enum SessionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ExamDifficulty {
+  BEGINNER
+  MEDIUM
+  ADVANCED
+  EXPERT
+}

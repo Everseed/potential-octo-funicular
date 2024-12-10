@@ -1,32 +1,29 @@
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-/* import "@/styles/globals.css" */
-import "@/styles/globals.css";
-import { SessionProvider } from "next-auth/react";
-import { Providers } from "./providers";
+import { MainNav } from '@/components/main-nav';
 
+import { Inter } from "next/font/google"
+import "@/styles/globals.css";
+import Link from 'next/link';
 
 const inter = Inter({ subsets: ["latin"] })
-
-export const metadata: Metadata = {
-  title: "PrepAI - Plateforme d'apprentissage",
-  description: "Préparez-vous aux entretiens et certifications avec des experts",
-
-  icons: {
-    icon: "/favicon.ico",
-  }
-}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="fr" className="h-full" suppressHydrationWarning>
       <body className={`${inter.className} h-full antialiased`}>
-        <Providers>{children}</Providers>
+        <header className="sticky top-0 z-50 w-full border-b bg-background">
+          <div className="container flex h-16 items-center justify-between">
+            <Link href="/" className="font-bold text-xl">
+              PrepAI
+            </Link>
+            <MainNav />
+          </div>
+        </header>
+        {children}
       </body>
     </html>
-  )
+  );
 }

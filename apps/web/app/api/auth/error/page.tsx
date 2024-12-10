@@ -6,9 +6,9 @@ import Link from "next/link";
 export default function AuthError({
   searchParams,
 }: {
-  searchParams: { error?: string };
+  searchParams?: { error?: string };
 }) {
-  const error = searchParams?.error || "Une erreur s'est produite";
+  const error = searchParams?.error || "default";
   
   const errorMessages: Record<string, string> = {
     Signin: "Tentative de connexion échouée.",

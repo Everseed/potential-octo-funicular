@@ -13,7 +13,8 @@
     "postinstall": "prisma generate"
   },
   "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+    "seedds": "npx prisma db prisma/seed.ts",
+    "seed": "ts-node prisma/seed.ts"
   },
   "devDependencies": {
     "@prisma/client": "6.0.1",
@@ -23,5 +24,8 @@
     "turbo": "^2.3.3",
     "typescript": "^5.2.2"
   },
-  "packageManager": "pnpm@9.14.4"
+  "packageManager": "pnpm@9.14.4",
+  "dependencies": {
+    "ts-node": "^10.9.2"
+  }
 }

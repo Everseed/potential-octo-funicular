@@ -13,328 +13,229 @@ model User {
   email         String         @unique
   name          String?
   role          UserRole       @default(STUDENT)
+  
+  // Champs d'authentification
+  password      String?        // Null pour les connexions sociales
+  emailVerified DateTime?      // Date de vérification de l'email
+  refreshToken  String?        // Token de rafraichissement
+  lastLoginAt   DateTime?      // Dernière connexion
+  lastLogoutAt  DateTime?      // Dernière déconnexion
+
+  // Champs spécifiques aux experts
+  bio           String?
+  expertise     String[]
+  hourlyRate    Float?
+  experience    Int?
+  timezone      String?        @default("UTC")
+  bufferTime    Int?          @default(15)  // Minutes entre les sessions
+  availability  Availability[]
+  
+  // Relations communes
+  timeSlots     TimeSlot[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  emailVerified DateTime?
-  exams         Exam[]
-  interviews    Interview[]
-  subInterviews SubInterview[]
-  progress      Progress?
-  ExamProgress  ExamProgress[]
-  payments      Payment[]      
-  sessions      Session[]      
-  timeSlots     TimeSlot[]
-  studentBookings Booking[]    @relation("StudentBookings")
-  mentorBookings  Booking[]    @relation("MentorBookings")
+
+  // Relations pour les sessions
+  expertSessions    Session[]  @relation("ExpertSessions")
+  studentSessions   Session[]  @relation("StudentSessions")
+  
+  // Relations pour les demandes
+  sentRequests     Request[]   @relation("UserRequests")
+  receivedRequests Request[]   @relation("ExpertRequests")
+  
+  // Autres relations
+  // Relations pour les revues
+  reviewsGiven    Review[]  @relation("StudentReviews") // Avis donnés par l'étudiant
+  reviewsReceived Review[]  @relation("ExpertReviews")  // Avis reçus en tant qu'expert
+  payments        Payment[]
   notifications   Notification[]
+  
 }
 
-model Payment {
+model Request {
   id          String        @id @default(uuid())
+  title       String
+  description String
+  objectives  String[]
   userId      String
-  user        User          @relation(fields: [userId], references: [id])
-  amount      Float
-  currency    String
-  method      PaymentMethod
-  status      PaymentStatus @default(PENDING)
+  expertId    String
+  status      RequestStatus @default(PENDING)
+  category    String
+  urgency     UrgencyLevel  @default(NORMAL)
+  budget      Float?
+  duration    Int?          // En minutes
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
+  // Relations
+  user        User          @relation("UserRequests", fields: [userId], references: [id])
+  expert      User          @relation("ExpertRequests", fields: [expertId], references: [id])
+  session     Session?
+
   @@index([userId])
+  @@index([expertId])
 }
 
 model Session {
   id          String        @id @default(uuid())
+  requestId   String?       @unique
+  type        SessionType
   title       String
   description String?
-  userId      String
-  user        User          @relation(fields: [userId], references: [id])
-  type        SessionType
-  content     Json          // Contenu structuré du cours
-  resources   Json?         // Ressources additionnelles
+  expertId    String
+  studentId   String
   duration    Int           // En minutes
-  startTime   DateTime?
-  endTime     DateTime?
+  startTime   DateTime
+  endTime     DateTime
   status      SessionStatus @default(SCHEDULED)
+  notes       String?
+  recording   String?
+  sessionData Json?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  @@index([userId])
-}
+  // Relations
+  expert      User          @relation("ExpertSessions", fields: [expertId], references: [id])
+  student     User          @relation("StudentSessions", fields: [studentId], references: [id])
+  request     Request?      @relation(fields: [requestId], references: [id])
+  timeSlot    TimeSlot?
+  payment     Payment?
+  review      Review?
+  whiteboard  Whiteboard?
+  codeSession CodeSession?
+  quiz        Quiz?
 
-model Exam {
-  id           String         @id @default(uuid())
-  type         ExamType
-  title        String
-  status       ExamStatus     @default(PENDING)
-  questions    Json
-  duration     Int?
-  startTime    DateTime?
-  endTime      DateTime?
-  score        Float?
-  difficulty   ExamDifficulty @default(MEDIUM) // Nouveau champ
-  userId       String
-  user         User           @relation(fields: [userId], references: [id])
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  ExamProgress ExamProgress[]
-  category     String?        // Pour le classement des examens
-  tags         String[]       // Pour faciliter la recherche
-  
-  @@index([userId])
-  @@index([type, difficulty]) // Index pour la recherche
-}
-
-model ExamProgress {
-  id              String   @id @default(uuid())
-  examId          String
-  userId          String
-  currentQuestion Int      @default(0)
-  answers         Json     @default("{}")
-  timeSpent       Int      @default(0)
-  updatedAt       DateTime @updatedAt
-  exam            Exam     @relation(fields: [examId], references: [id])
-  user            User     @relation(fields: [userId], references: [id])
-
-  @@unique([examId, userId])
-}
-
-model Interview {
-  id            String          @id @default(uuid())
-  type          InterviewType
-  title         String
-  status        InterviewStatus @default(SCHEDULED)
-  scheduledFor  DateTime
-  duration      Int // in minutes
-  userId        String
-  user          User            @relation(fields: [userId], references: [id])
-  subInterviews SubInterview[]
-  videoSessions VideoSession[]
-  participants  Json
-  feedback      Json?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-
-  @@index([userId])
-}
-
-model SubInterview {
-  id            String         @id @default(uuid())
-  interviewId   String
-  interview     Interview      @relation(fields: [interviewId], references: [id])
-  title         String
-  description   String?
-  participants  Json
-  startTime     DateTime
-  endTime       DateTime
-  userId        String
-  user          User           @relation(fields: [userId], references: [id])
-  videoSessions VideoSession[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-
-  @@index([interviewId])
-  @@index([userId])
-}
-
-model VideoSession {
-  id             String        @id @default(uuid())
-  interviewId    String?
-  interview      Interview?    @relation(fields: [interviewId], references: [id])
-  subInterviewId String?
-  subInterview   SubInterview? @relation(fields: [subInterviewId], references: [id])
-  url            String
-  duration       Int // in seconds 
-  startedAt      DateTime
-  endedAt        DateTime
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-
-  @@index([interviewId])
-  @@index([subInterviewId])
-}
-
-model Progress {
-  id             String   @id @default(uuid())
-  userId         String   @unique
-  user           User     @relation(fields: [userId], references: [id])
-  totalExams     Int      @default(0)
-  completedExams Int      @default(0)
-  averageScore   Float    @default(0)
-  strengths      String[]
-  weaknesses     String[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-}
-
-model MessageReaction {
-  id        String   @id @default(uuid())
-  messageId String
-  userId    String
-  emoji     String
-  deleted   Boolean  @default(false)
-  createdAt DateTime @default(now())
-}
-
-model Annotation {
-  id             String   @id @default(uuid())
-  presentationId String
-  userId         String
-  slideNumber    Int
-  type           String // DRAW, TEXT, SHAPE
-  color          String
-  thickness      Int?
-  data           Json // points, text, shape data
-  deleted        Boolean  @default(false)
-  createdAt      DateTime @default(now())
-}
-
-model DrawingElement {
-  id             String   @id @default(uuid())
-  presentationId String
-  userId         String
-  type           String
-  data           Json
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  deleted        Boolean  @default(false)
-}
-
-model ReactionAnalytics {
-  id        String   @id @default(uuid())
-  sessionId String
-  period    String
-  data      Json
-  createdAt DateTime @default(now())
-}
-
-model Vector {
-  id         String   @id @default(uuid())
-  embedding  Float[] // Stockage du vecteur d'embedding
-  metadata   Json // Métadonnées associées au vecteur
-  type       String // Type de contenu (ex: 'EXAM_QUESTION', 'CODING_PROBLEM', etc.)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  deleted    Boolean  @default(false)
-
+  @@index([expertId])
+  @@index([studentId])
   @@index([type])
-  // Index pour la recherche de similarité
-  @@index([embedding])//type: Vector
 }
 
-// Nouvelles tables pour la gestion des créneaux horaires
-model TimeSlot {
+model Review {
   id          String    @id @default(uuid())
+  sessionId   String    @unique
+  studentId   String    // Renommé pour plus de clarté: l'étudiant qui laisse l'avis
+  expertId    String    // L'expert qui reçoit l'avis
+  rating      Int       // Note sur 5
+  comment     String?
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  session     Session   @relation(fields: [sessionId], references: [id])
+  student     User      @relation("StudentReviews", fields: [studentId], references: [id])
+  expert      User      @relation("ExpertReviews", fields: [expertId], references: [id])
+
+
+  @@index([studentId])
+  @@index([expertId])
+}
+
+model TimeSlot {
+  id          String     @id @default(uuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
   startTime   DateTime
   endTime     DateTime
-  userId      String    // ID du mentor
-  user        User      @relation(fields: [userId], references: [id])
-  isAvailable Boolean   @default(true)
-  booking     Booking?  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  status      SlotStatus @default(AVAILABLE)
+  sessionId   String?    @unique
+  session     Session?   @relation(fields: [sessionId], references: [id])
 
   @@index([userId])
   @@index([startTime, endTime])
 }
 
-model Booking {
-  id          String    @id @default(uuid())
-  timeSlotId  String    @unique
-  timeSlot    TimeSlot  @relation(fields: [timeSlotId], references: [id])
-  studentId   String    // ID de l'étudiant
-  student     User      @relation("StudentBookings", fields: [studentId], references: [id])
-  mentorId    String    // ID du mentor
-  mentor      User      @relation("MentorBookings", fields: [mentorId], references: [id])
-  status      BookingStatus @default(PENDING)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([studentId])
-  @@index([mentorId])
-}
-
-model Notification {
+model Availability {
   id          String    @id @default(uuid())
   userId      String
   user        User      @relation(fields: [userId], references: [id])
-  type        NotificationType
-  title       String
-  message     String
-  isRead      Boolean   @default(false)
-  data        Json?     // Données supplémentaires (ex: bookingId)
-  createdAt   DateTime  @default(now())
+  dayOfWeek   Int       // 0-6 (Dimanche-Samedi)
+  startTime   String    // Format "HH:mm"
+  endTime     String    // Format "HH:mm"
+  isRecurring Boolean   @default(true)
+
+  @@index([userId])
+  @@index([dayOfWeek])
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  sessionId      String        @unique
+  amount         Float
+  currency       String        @default("EUR")
+  status         PaymentStatus @default(PENDING)
+  paymentMethod  PaymentMethod
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id])
+  session     Session      @relation(fields: [sessionId], references: [id])
+  userId      String
 
   @@index([userId])
 }
 
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-  COMPLETED
+model Notification {
+  id          String            @id @default(uuid())
+  userId      String
+  type        NotificationType
+  title       String
+  message     String
+  read        Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+
+  // Relations
+  user        User              @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
-enum NotificationType {
-  BOOKING_REQUEST
-  BOOKING_CONFIRMED
-  BOOKING_CANCELLED
-  REMINDER
-  SYSTEM
+model CodeSession {
+  id          String   @id @default(uuid())
+  sessionId   String   @unique
+  language    String
+  code        String
+  output      String?
+  files       Json[]
+  session     Session  @relation(fields: [sessionId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Whiteboard {
+  id          String   @id @default(uuid())
+  sessionId   String   @unique
+  session     Session  @relation(fields: [sessionId], references: [id])
+  elements    Json[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Quiz {
+  id          String     @id @default(uuid())
+  sessionId   String     @unique
+  session     Session    @relation(fields: [sessionId], references: [id])
+  timing      QuizTiming @default(END)
+  customTime  Int?       // En minutes depuis le début (pour CUSTOM)
+  milestones  Int[]      // Liste des minutes pour MILESTONE
+  questions   Json[]
+  responses   Json[]
+  score       Float?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 enum UserRole {
   STUDENT
-  MENTOR
+  EXPERT
   ADMIN
 }
 
-enum ExamType {
-  MCQ
-  CODING
-  OPEN
-}
-
-enum ExamStatus {
+enum RequestStatus {
   PENDING
-  IN_PROGRESS
-  COMPLETED
-}
-
-enum InterviewType {
-  MOCK
-  TECHNICAL
-  BEHAVIORAL
-  PAIR_PROGRAMMING
-}
-
-enum InterviewStatus {
-  SCHEDULED
-  IN_PROGRESS
+  ACCEPTED
+  REJECTED
   COMPLETED
   CANCELLED
-  ARCHIVED
-}
-
-enum PaymentMethod {
-  STRIPE
-  PAYPAL
-  ORANGE_MONEY
-  MTN_MONEY
-}
-
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
-}
-
-enum SessionType {
-  COURSE
-  WORKSHOP
-  TUTORING
-  GROUP_STUDY
 }
 
 enum SessionStatus {
@@ -344,9 +245,59 @@ enum SessionStatus {
   CANCELLED
 }
 
-enum ExamDifficulty {
-  BEGINNER
-  MEDIUM
-  ADVANCED
-  EXPERT
+enum SessionType {
+  CODE
+  DESIGN
+  VIDEO_CALL
+  QUIZ
+  MIXED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  PAYPAL
+  TRANSFER
+}
+
+enum NotificationType {
+  REQUEST_RECEIVED
+  REQUEST_ACCEPTED
+  REQUEST_REJECTED
+  SESSION_REMINDER
+  SESSION_CANCELLED
+  PAYMENT_RECEIVED
+  REVIEW_RECEIVED
+}
+
+enum UrgencyLevel {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum QuizTiming {
+  BEGIN
+  MIDDLE
+  END
+  CUSTOM
+  PERIODIC_15
+  PERIODIC_30
+  PERIODIC_60
+  MILESTONE
+}
+
+enum SlotStatus {
+  AVAILABLE
+  TENTATIVE
+  BOOKED
+  CANCELLED
+  COMPLETED
 }

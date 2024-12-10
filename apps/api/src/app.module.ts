@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
-import { ExamModule } from './modules/exam/exam.module';
-import { InterviewModule } from './modules/interview/interview.module';
-import { SessionModule } from './modules/session/session.module';
-import { PaymentModule } from './modules/payment/payment.module';
-import { VideoModule } from './modules/video/video.module';
+import { SessionModule } from './modules/sessions/session.module';
+import { CodingGameModule } from './modules/coding-game/coding-game.module';
+import { ExpertModule } from './modules/experts/expert.module';
+import { InterviewsModule } from './modules/interviews/interviews.module';
+import { SchedulingModule } from './modules/scheduling/scheduling.module';
+import { UsersModule } from './modules/users/users.module';
+import { WebsocketModule } from './modules/websocket/websocket.module';
 
 @Module({
   imports: [
@@ -15,13 +16,15 @@ import { VideoModule } from './modules/video/video.module';
       isGlobal: true,
     }),
     PrismaModule,
-    ExamModule,
-    InterviewModule,
+    CodingGameModule,
+    ExpertModule,
+    InterviewsModule,
+    SchedulingModule,
+    UsersModule,
+    WebsocketModule,
     SessionModule,
-    PaymentModule,
-    VideoModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [],
 })
 export class AppModule {}

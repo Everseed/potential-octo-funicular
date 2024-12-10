@@ -1,105 +1,368 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# PrepAI - Plateforme d'Expert Connect
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 🎯 Vue d'ensemble
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+PrepAI est une plateforme innovante de mise en relation entre experts et apprenants, conçue pour faciliter l'apprentissage personnalisé et le mentorat technique. Elle se distingue par sa capacité à offrir des sessions interactives riches combinant vidéo, code en direct, tableaux blancs collaboratifs et évaluations en temps réel.
 
-## Description
+### Architecture Technique
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
-```bash
-$ pnpm install
+```
+┌─────────────────┐     ┌──────────────┐     ┌─────────────────┐
+│    Frontend     │     │     API      │     │    Services     │
+│    (Next.js)    │◄───►│   (NestJS)   │◄───►│  & Database    │
+└─────────────────┘     └──────────────┘     └─────────────────┘
+        ▲                      ▲                     ▲
+        │                      │                     │
+        ▼                      ▼                     ▼
+┌─────────────────┐     ┌──────────────┐     ┌─────────────────┐
+│  WebSocket &    │     │   Auth &     │     │    Storage &    │
+│  Real-time      │     │   Security   │     │    Caching      │
+└─────────────────┘     └──────────────┘     └─────────────────┘
 ```
 
-## Compile and run the project
+### Flux Utilisateur Principal
 
-```bash
-# development
-$ pnpm run start
+1. **Parcours Apprenant**
+   ```mermaid
+   graph LR
+   A[Inscription] --> B[Recherche Expert]
+   B --> C[Consultation Profil]
+   C --> D[Demande Session]
+   D --> E[Session Interactive]
+   E --> F[Évaluation & Feedback]
+   ```
 
-# watch mode
-$ pnpm run start:dev
+2. **Parcours Expert**
+   ```mermaid
+   graph LR
+   A[Configuration Profil] --> B[Définition Disponibilités]
+   B --> C[Réception Demandes]
+   C --> D[Gestion Sessions]
+   D --> E[Conduite Sessions]
+   E --> F[Suivi Progrès]
+   ```
 
-# production mode
-$ pnpm run start:prod
+### Types de Sessions
+
+1. **Sessions de Code**
+   - IDE collaboratif en temps réel
+   - Exécution de code en direct
+   - Partage de snippets et debugging
+   - Tests et évaluations automatiques
+
+2. **Sessions Design/Architecture**
+   - Tableau blanc collaboratif
+   - Outils de modélisation UML
+   - Partage de schémas et diagrammes
+   - Annotations en temps réel
+
+3. **Sessions Video**
+   - Appels vidéo HD
+   - Partage d'écran
+   - Chat intégré
+   - Enregistrement des sessions
+
+4. **Sessions Quiz**
+   - QCM personnalisables
+   - Évaluations programmées
+   - Suivi des progrès
+   - Analytics détaillés
+
+### Fonctionnalités Clés
+
+#### 1. Système de Matching Expert-Apprenant
+- Algorithme de correspondance basé sur :
+  ```typescript
+  interface MatchingCriteria {
+    expertise: string[];
+    availability: TimeSlot[];
+    language: string[];
+    rating: number;
+    priceRange: Range;
+  }
+  ```
+
+#### 2. Gestion des Sessions
+- Planification intelligente
+- Notifications automatiques
+- Rappels personnalisés
+- Support multi-fuseaux horaires
+
+#### 3. Système d'Évaluation
+```typescript
+interface Assessment {
+  quizTiming: 'BEGIN' | 'MIDDLE' | 'END' | 'PERIODIC';
+  questionTypes: ('MCQ' | 'CODE' | 'OPEN')[];
+  adaptiveScoring: boolean;
+  immediateFeeback: boolean;
+}
 ```
 
-## Run tests
+### Intégrations Techniques
 
-```bash
-# unit tests
-$ pnpm run test
+1. **Communication Temps Réel**
+   - WebSocket pour la messagerie instantanée
+   - WebRTC pour les appels vidéo
+   - Socket.io pour la synchronisation des données
 
-# e2e tests
-$ pnpm run test:e2e
+2. **Stockage et Base de Données**
+   - PostgreSQL pour les données structurées
+   - Redis pour le cache et les sessions
+   - S3 pour les fichiers et enregistrements
 
-# test coverage
-$ pnpm run test:cov
+3. **Sécurité**
+   - NextAuth.js pour l'authentification
+   - JWT pour l'autorisation
+   - Encryption des données sensibles
+
+### Métriques et Analytics
+
+```typescript
+interface SessionMetrics {
+  duration: number;
+  interactionRate: number;
+  quizScores: number[];
+  feedbackRating: number;
+  technicalIssues: Issue[];
+  learningProgress: Progress;
+}
 ```
 
-## Deployment
+### Cas d'Utilisation Spécifiques
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+1. **Préparation Entretien Technique**
+   - Sessions de code en direct
+   - Simulations d'entretien
+   - Feedback instantané
+   - Enregistrement pour révision
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+2. **Review de Code**
+   - Partage de repository
+   - Annotations collaboratives
+   - Suggestions en temps réel
+   - Historique des modifications
 
-```bash
-$ pnpm install -g mau
-$ mau deploy
+3. **Mentorat Design Système**
+   - Outils de prototypage
+   - Guides de style interactifs
+   - Tests d'accessibilité
+   - Documentation collaborative
+
+### Extensibilité
+
+Le système est conçu pour être facilement extensible avec :
+- Architecture modulaire
+- API RESTful documentée
+- Webhooks pour intégrations externes
+- SDK pour développeurs
+
+Cette plateforme offre une solution complète pour faciliter l'apprentissage personnalisé et le mentorat technique, en mettant l'accent sur l'interaction en temps réel et l'évaluation continue des progrès.
+
+
+## 🏗️ Architecture
+
+### Backend (NestJS)
+
+```
+src/
+├── app.module.ts
+├── main.ts
+├── common/              # Utilitaires partagés
+├── experts/            # Gestion des experts
+├── sessions/           # Gestion des sessions
+├── scheduling/         # Planification
+└── websocket/         # Communication temps réel
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Frontend (Next.js)
 
-## Resources
+```
+app/
+├── (auth)/            # Routes d'authentification
+├── (protected)/       # Routes protégées
+├── api/              # Routes API
+├── components/       # Composants réutilisables
+└── lib/             # Utilitaires
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+## 🚀 Installation
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Prérequis
 
-## Support
+- Node.js (v18+)
+- PostgreSQL
+- Redis (pour les WebSockets)
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Configuration
 
-## Stay in touch
+1. Cloner le repository
+```bash
+git clone https://github.com/your-repo/prepai.git
+cd prepai
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+2. Installer les dépendances
+```bash
+# Backend
+cd api
+npm install
 
-## License
+# Frontend
+cd web
+npm install
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+3. Variables d'environnement
 
-Pour implémenter complètement cette solution, vous aurez besoin de :
+Backend (.env):
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/prepai"
+JWT_SECRET="your-secret"
+REDIS_URL="redis://localhost:6379"
+FRONTEND_URL="http://localhost:3000"
+```
 
-Un serveur TURN (comme coturn)
-Un service de stockage pour les enregistrements (comme S3)
-Une solution de signaling pour WebRTC (comme Socket.io)
+Frontend (.env.local):
+```env
+NEXT_PUBLIC_API_URL="http://localhost:3001/api"
+NEXTAUTH_SECRET="your-secret"
+NEXTAUTH_URL="http://localhost:3000"
+```
+
+4. Base de données
+```bash
+cd api
+npx prisma migrate dev
+```
+
+## 🔥 Fonctionnalités
+
+### 1. Authentification
+- NextAuth.js avec support JWT
+- Rôles: STUDENT, EXPERT, ADMIN
+- Protection des routes par rôle
+
+### 2. Sessions
+- Types de sessions:
+  - CODE (Sessions de programmation)
+  - DESIGN (Whiteboard collaboratif)
+  - VIDEO_CALL (Appels vidéo)
+  - QUIZ (Évaluations)
+  - MIXED (Combinaison)
+
+### 3. Quiz
+Timing configurable:
+- BEGIN (Début de session)
+- MIDDLE (Milieu)
+- END (Fin)
+- PERIODIC_15 (Toutes les 15 minutes)
+- PERIODIC_30 (Toutes les 30 minutes)
+- PERIODIC_60 (Toutes les heures)
+- MILESTONE (Points spécifiques)
+- CUSTOM (Personnalisé)
+
+### 4. Planification
+- Gestion des disponibilités des experts
+- Réservation de créneaux
+- Notifications en temps réel
+
+## 🔧 Utilisation
+
+### API Endpoints
+
+```typescript
+// Experts
+GET    /api/experts
+GET    /api/experts/:id
+PUT    /api/experts/:id/availability
+GET    /api/experts/:id/sessions
+
+// Sessions
+POST   /api/sessions
+GET    /api/sessions/:id
+POST   /api/sessions/:id/quiz/submit
+
+// Planification
+GET    /api/scheduling/expert/:expertId/availability
+POST   /api/scheduling/book
+POST   /api/scheduling/timeslots/batch
+```
+
+### Exemple d'utilisation
+
+```typescript
+// Créer une session
+const session = await fetch('/api/sessions', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    expertId: 'expert_id',
+    type: 'VIDEO_CALL',
+    title: 'Consultation React',
+    quiz: {
+      timing: 'PERIODIC_15',
+      questions: [
+        {
+          question: "Qu'est-ce que le Virtual DOM?",
+          options: ["...", "...", "...", "..."],
+          correctAnswer: 0
+        }
+      ]
+    }
+  })
+});
+```
+
+## 🧪 Tests
+
+```bash
+# Backend
+cd api
+npm run test
+
+# Frontend
+cd web
+npm run test
+```
+
+## 📦 Déploiement
+
+### Backend
+```bash
+cd api
+npm run build
+npm run start:prod
+```
+
+### Frontend
+```bash
+cd web
+npm run build
+npm run start
+```
+
+## 🔐 Sécurité
+
+- JWT pour l'authentification
+- Protection CSRF
+- Rate limiting
+- Validation des entrées
+- Sanitization des données
+
+## 🤝 Contribution
+
+1. Fork le projet
+2. Créer une branche (`git checkout -b feature/amazing-feature`)
+3. Commit les changements (`git commit -m 'Add amazing feature'`)
+4. Push vers la branche (`git push origin feature/amazing-feature`)
+5. Ouvrir une Pull Request
+
+## 📝 License
+
+MIT License - voir LICENSE.md pour plus de détails
+
+## 📞 Support
+
+Pour toute question ou problème:
+- Ouvrir une issue
+- Contacter support@prepai.com
